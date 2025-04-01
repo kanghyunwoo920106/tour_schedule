@@ -13,17 +13,27 @@ export default function Home() {
   });
   const [schedule, setSchedule] = useState<TravelSchedule[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
+
+    // 입력값 검증
+    if (!preferences.country) {
+      setError('여행지를 입력해주세요.');
+      setLoading(false);
+      return;
+    }
 
     try {
       const travelService = TravelService.getInstance();
       const generatedSchedule = await travelService.generateTravelSchedule(preferences);
       setSchedule(generatedSchedule);
-    } catch (error) {
+    } catch (error: any) {
       console.error('여행 일정 생성 중 오류 발생:', error);
+      setError(error.message || '여행 일정을 생성하는 중 오류가 발생했습니다.');
     } finally {
       setLoading(false);
     }
@@ -34,6 +44,21 @@ export default function Home() {
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl font-bold text-gray-800 mb-2 text-center">맞춤 여행 코스 추천</h1>
         <p className="text-gray-600 text-center mb-8">당신의 여행 스타일에 맞는 최적의 일정을 만들어드립니다</p>
+        
+        {error && (
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded-lg">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-lg p-8 mb-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -101,6 +126,11 @@ export default function Home() {
               '여행 일정 생성하기'
             )}
           </button>
+
+          <div className="text-sm text-gray-500 pt-2">
+            <p>* API 키가 유효한지 확인해주세요.</p>
+            <p>* 여행지는 도시나 국가 이름을 입력해주세요. (예: 도쿄, 일본)</p>
+          </div>
         </form>
 
         {schedule.length > 0 && (
